@@ -34,10 +34,8 @@ async def run() -> None:
         limit=settings.max_concurrent_updates + 2,
     )
     bot = Bot(token=settings.telegram_bot_token, session=session)
-    dispatcher = create_dispatcher(settings, database, OpenAIService(settings))
-    me = await bot.get_me()
-    logger.info("Starting long polling for @%s", me.username)
-    await bot.delete_webhook(drop_pending_updates=False)
+    openai_service = OpenAIService(settings)
+    dispatcher = create_dispatcher(settings, database, openai_service)
 
     async def purge_periodically() -> None:
         while True:
@@ -46,17 +44,23 @@ async def run() -> None:
             if removed:
                 logger.info("Purged %s expired recordings", removed)
 
-    purge_task = asyncio.create_task(purge_periodically())
+    purge_task: asyncio.Task[None] | None = None
     try:
+        me = await bot.get_me()
+        logger.info("Starting long polling for @%s", me.username)
+        await bot.delete_webhook(drop_pending_updates=False)
+        purge_task = asyncio.create_task(purge_periodically())
         await dispatcher.start_polling(
             bot,
             allowed_updates=dispatcher.resolve_used_update_types(),
             tasks_concurrency_limit=settings.max_concurrent_updates,
         )
     finally:
-        purge_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await purge_task
+        if purge_task is not None:
+            purge_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await purge_task
+        await openai_service.close()
         await bot.session.close()
 
 

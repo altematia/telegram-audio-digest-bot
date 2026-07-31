@@ -18,6 +18,7 @@ def test_settings_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.database_path == Path("tmp/test.sqlite3")
     assert settings.allowed_user_ids == frozenset({12, 34})
     assert settings.bot_claim_secret is None
+    assert settings.openai_proxy_url is None
     assert settings.max_concurrent_updates == 4
     assert settings.user_is_allowed(12)
     assert not settings.user_is_allowed(56)

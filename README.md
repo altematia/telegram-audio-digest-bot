@@ -48,7 +48,7 @@ cp .env.example .env
 
 Продакшен расположен в `/opt/telegram-audio-digest-bot`, секреты — в `/etc/telegram-audio-digest-bot.env`, данные — в `/var/lib/telegram-audio-digest-bot`.
 
-На текущем сервере прямой маршрут к Telegram API заблокирован провайдером, поэтому только Telegram-трафик приложения направлен через локальный SOCKS5 `127.0.0.1:9050` (Tor + официальный Snowflake/Lyrebird). OpenAI-трафик остаётся прямым. Это задаётся через `TELEGRAM_PROXY_URL`; systemd запускает бот после Tor.
+На текущем сервере прямой маршрут к Telegram API заблокирован провайдером, а прямой OpenAI API недоступен из региона. Поэтому оба API-трафика приложения направлены через локальный SOCKS5 `127.0.0.1:9050` (Tor + официальный Snowflake/Lyrebird); SSH и остальной трафик сервера не меняются. Это задаётся через `TELEGRAM_PROXY_URL` и `OPENAI_PROXY_URL`; systemd запускает бот после Tor.
 
 Первичная установка от `root`:
 

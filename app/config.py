@@ -44,6 +44,7 @@ class Settings:
     openai_api_key: str = field(repr=False)
     bot_claim_secret: str | None = field(repr=False)
     telegram_proxy_url: str | None
+    openai_proxy_url: str | None
     transcribe_model: str
     summary_model: str
     database_path: Path
@@ -68,6 +69,7 @@ class Settings:
             openai_api_key=_required_env("OPENAI_API_KEY"),
             bot_claim_secret=claim_secret,
             telegram_proxy_url=os.getenv("TELEGRAM_PROXY_URL", "").strip() or None,
+            openai_proxy_url=os.getenv("OPENAI_PROXY_URL", "").strip() or None,
             transcribe_model=os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-transcribe").strip(),
             summary_model=os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5.6-terra").strip(),
             database_path=Path(os.getenv("DATABASE_PATH", "data/bot.sqlite3")).expanduser(),

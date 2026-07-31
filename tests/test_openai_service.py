@@ -31,6 +31,7 @@ def settings(tmp_path: Path) -> Settings:
         openai_api_key="openai",
         bot_claim_secret="a-very-long-claim-secret",
         telegram_proxy_url=None,
+        openai_proxy_url=None,
         transcribe_model="gpt-transcribe",
         summary_model="gpt-5.6-terra",
         database_path=tmp_path / "db.sqlite3",

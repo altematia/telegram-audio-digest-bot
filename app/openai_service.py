@@ -4,6 +4,7 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
+import httpx
 from openai import AsyncOpenAI
 
 from app.config import Settings
@@ -47,11 +48,27 @@ OUTPUT_TOKEN_LIMITS = {
 class OpenAIService:
     def __init__(self, settings: Settings, client: Any | None = None) -> None:
         self.settings = settings
-        self.client = client or AsyncOpenAI(
+        self._owns_client = client is None
+        if client is not None:
+            self.client = client
+            return
+
+        http_client = None
+        if settings.openai_proxy_url:
+            http_client = httpx.AsyncClient(
+                proxy=settings.openai_proxy_url,
+                timeout=settings.openai_timeout_seconds,
+            )
+        self.client = AsyncOpenAI(
             api_key=settings.openai_api_key,
             timeout=settings.openai_timeout_seconds,
             max_retries=2,
+            http_client=http_client,
         )
+
+    async def close(self) -> None:
+        if self._owns_client:
+            await self.client.close()
 
     async def transcribe(self, audio_path: Path) -> str:
         with audio_path.open("rb") as audio_file:

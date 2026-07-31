@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from aiogram import Bot
 from aiogram.client.session.aiohttp import AiohttpSession
 from dotenv import load_dotenv
+import httpx
 from openai import AsyncOpenAI
 
 from app.config import Settings
@@ -44,54 +45,64 @@ async def main(openai_only: bool = False) -> None:
         finally:
             await bot.session.close()
 
+    http_client = None
+    if settings.openai_proxy_url:
+        http_client = httpx.AsyncClient(
+            proxy=settings.openai_proxy_url,
+            timeout=settings.openai_timeout_seconds,
+        )
     client = AsyncOpenAI(
         api_key=settings.openai_api_key,
         timeout=settings.openai_timeout_seconds,
+        http_client=http_client,
     )
-    response = await client.responses.create(
-        model=settings.summary_model,
-        input="Ответь одним словом: работает",
-        reasoning={"effort": "low"},
-        max_output_tokens=40,
-        safety_identifier="deployment-smoke-test",
-        store=False,
-    )
-    result["summary"] = "ok" if response.output_text.strip() else "empty"
+    try:
+        response = await client.responses.create(
+            model=settings.summary_model,
+            input="Ответь одним словом: работает",
+            reasoning={"effort": "low"},
+            max_output_tokens=40,
+            safety_identifier="deployment-smoke-test",
+            store=False,
+        )
+        result["summary"] = "ok" if response.output_text.strip() else "empty"
 
-    with tempfile.TemporaryDirectory(prefix="audio-smoke-") as temp_dir:
-        wav_path = Path(temp_dir) / "silence.wav"
-        ogg_path = Path(temp_dir) / "voice.ogg"
-        _silent_wav(wav_path)
-        if shutil.which(settings.ffmpeg_bin):
-            subprocess.run(
-                [
-                    settings.ffmpeg_bin,
-                    "-hide_banner",
-                    "-loglevel",
-                    "error",
-                    "-y",
-                    "-i",
-                    str(wav_path),
-                    "-c:a",
-                    "libopus",
-                    str(ogg_path),
-                ],
-                check=True,
-            )
-            prepared = await prepare_for_openai(ogg_path, settings.ffmpeg_bin)
-            if prepared.suffix != ".webm" or not prepared.is_file():
-                raise RuntimeError("Telegram OGG was not converted to WebM")
-            result["voice_conversion"] = "ok"
-        elif openai_only:
-            prepared = wav_path
-            result["voice_conversion"] = "skipped:no-local-ffmpeg"
-        else:
-            raise RuntimeError("ffmpeg is required for the deployment smoke test")
-        with prepared.open("rb") as audio_file:
-            await client.audio.transcriptions.create(
-                model=settings.transcribe_model,
-                file=audio_file,
-            )
+        with tempfile.TemporaryDirectory(prefix="audio-smoke-") as temp_dir:
+            wav_path = Path(temp_dir) / "silence.wav"
+            ogg_path = Path(temp_dir) / "voice.ogg"
+            _silent_wav(wav_path)
+            if shutil.which(settings.ffmpeg_bin):
+                subprocess.run(
+                    [
+                        settings.ffmpeg_bin,
+                        "-hide_banner",
+                        "-loglevel",
+                        "error",
+                        "-y",
+                        "-i",
+                        str(wav_path),
+                        "-c:a",
+                        "libopus",
+                        str(ogg_path),
+                    ],
+                    check=True,
+                )
+                prepared = await prepare_for_openai(ogg_path, settings.ffmpeg_bin)
+                if prepared.suffix != ".webm" or not prepared.is_file():
+                    raise RuntimeError("Telegram OGG was not converted to WebM")
+                result["voice_conversion"] = "ok"
+            elif openai_only:
+                prepared = wav_path
+                result["voice_conversion"] = "skipped:no-local-ffmpeg"
+            else:
+                raise RuntimeError("ffmpeg is required for the deployment smoke test")
+            with prepared.open("rb") as audio_file:
+                await client.audio.transcriptions.create(
+                    model=settings.transcribe_model,
+                    file=audio_file,
+                )
+    finally:
+        await client.close()
     result["transcription"] = "ok"
 
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))

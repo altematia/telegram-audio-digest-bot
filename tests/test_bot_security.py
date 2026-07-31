@@ -40,6 +40,7 @@ def make_settings(database_path: Path) -> Settings:
         openai_api_key="test-openai-key",
         bot_claim_secret=CLAIM_SECRET,
         telegram_proxy_url=None,
+        openai_proxy_url=None,
         transcribe_model="gpt-transcribe",
         summary_model="gpt-5.6-terra",
         database_path=database_path,
