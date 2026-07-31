@@ -1,0 +1,31 @@
+[Unit]
+Description=Telegram Audio Digest Bot
+After=network-online.target tor@default.service
+Wants=network-online.target tor@default.service
+
+[Service]
+Type=simple
+User=telegrambot
+Group=telegrambot
+WorkingDirectory=/opt/telegram-audio-digest-bot
+EnvironmentFile=/etc/telegram-audio-digest-bot.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/telegram-audio-digest-bot/.venv/bin/python -m app.main
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/telegram-audio-digest-bot
+
+[Install]
+WantedBy=multi-user.target

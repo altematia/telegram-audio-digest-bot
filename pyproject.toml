@@ -1,0 +1,11 @@
+[project]
+name = "telegram-audio-digest-bot"
+version = "0.1.0"
+description = "Telegram bot for OpenAI-powered transcription and summaries"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]
