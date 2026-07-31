@@ -49,5 +49,12 @@ if [[ "$(systemctl show "${SERVICE_NAME}" --property=NRestarts --value)" != "${r
   journalctl --no-pager -n 50 -u "${SERVICE_NAME}"
   exit 1
 fi
+(
+  set -a
+  # shellcheck disable=SC1091
+  source /etc/telegram-audio-digest-bot.env
+  set +a
+  "${APP_DIR}/.venv/bin/python" scripts/smoke-test.py
+)
 systemctl --no-pager --full status "${SERVICE_NAME}"
 journalctl --no-pager -n 30 -u "${SERVICE_NAME}"

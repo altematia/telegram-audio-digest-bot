@@ -9,7 +9,7 @@ At the end of every implementation iteration in this repository:
 3. Commit all intended changes with a descriptive commit message. Do not create an empty commit when nothing changed.
 4. Push the commit to `origin/main`.
 5. Deploy that exact pushed revision to `root@109.172.6.81` by running `scripts/deploy.sh` (the server must update through `git pull --ff-only`).
-6. Verify `telegram-audio-digest-bot.service` is active and inspect its latest logs for startup or polling errors.
+6. Require the production smoke-test for Telegram, OpenAI summary, transcription, and OGG conversion to pass; then inspect the service logs for startup or polling errors.
 
 An iteration is not complete until tests, commit, push, deploy, restart, and service verification have all succeeded. Never commit or print credentials. Ask the user only after safe, in-scope recovery options are exhausted.
 
