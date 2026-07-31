@@ -14,7 +14,11 @@ fi
 
 ssh \
   -o BatchMode=yes \
+  -o ConnectTimeout=30 \
+  -o ConnectionAttempts=3 \
   -o IdentitiesOnly=yes \
+  -o ServerAliveInterval=10 \
+  -o ServerAliveCountMax=3 \
   -o StrictHostKeyChecking=yes \
   -i "${SSH_IDENTITY_FILE}" \
   "${SSH_TARGET}" \
